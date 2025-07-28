@@ -9,7 +9,11 @@ struct Tensor4D {
 
     Tensor4D(unsigned int const shape_[4], T const *data_) {
         unsigned int size = 1;
-        // TODO: 填入正确的 shape 并计算 size
+        // 填入正确的 shape 并计算 size
+        for (int i = 0; i < 4; ++i) {
+            shape[i] = shape_[i];
+            size *= shape[i];  // 计算总元素个数
+        }
         data = new T[size];
         std::memcpy(data, data_, size * sizeof(T));
     }
@@ -21,13 +25,40 @@ struct Tensor4D {
     Tensor4D(Tensor4D const &) = delete;
     Tensor4D(Tensor4D &&) noexcept = delete;
 
-    // 这个加法需要支持“单向广播”。
+    // 这个加法需要支持"单向广播"。
     // 具体来说，`others` 可以具有与 `this` 不同的形状，形状不同的维度长度必须为 1。
     // `others` 长度为 1 但 `this` 长度不为 1 的维度将发生广播计算。
     // 例如，`this` 形状为 `[1, 2, 3, 4]`，`others` 形状为 `[1, 2, 1, 4]`，
     // 则 `this` 与 `others` 相加时，3 个形状为 `[1, 2, 1, 4]` 的子张量各自与 `others` 对应项相加。
     Tensor4D &operator+=(Tensor4D const &others) {
-        // TODO: 实现单向广播的加法
+        // 实现单向广播的加法
+        for (unsigned int i0 = 0; i0 < shape[0]; ++i0) {
+            for (unsigned int i1 = 0; i1 < shape[1]; ++i1) {
+                for (unsigned int i2 = 0; i2 < shape[2]; ++i2) {
+                    for (unsigned int i3 = 0; i3 < shape[3]; ++i3) {
+                        // 计算当前元素在this中的索引
+                        unsigned int this_idx = i0 * (shape[1] * shape[2] * shape[3]) +
+                                               i1 * (shape[2] * shape[3]) +
+                                               i2 * shape[3] +
+                                               i3;
+                        
+                        // 计算对应元素在others中的索引（考虑广播）
+                        unsigned int other_i0 = (others.shape[0] == 1) ? 0 : i0;
+                        unsigned int other_i1 = (others.shape[1] == 1) ? 0 : i1;
+                        unsigned int other_i2 = (others.shape[2] == 1) ? 0 : i2;
+                        unsigned int other_i3 = (others.shape[3] == 1) ? 0 : i3;
+                        
+                        unsigned int other_idx = other_i0 * (others.shape[1] * others.shape[2] * others.shape[3]) +
+                                                other_i1 * (others.shape[2] * others.shape[3]) +
+                                                other_i2 * others.shape[3] +
+                                                other_i3;
+                        
+                        // 执行加法
+                        data[this_idx] += others.data[other_idx];
+                    }
+                }
+            }
+        }
         return *this;
     }
 };

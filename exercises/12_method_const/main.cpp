@@ -4,8 +4,11 @@
 
 struct Fibonacci {
     int numbers[11];
+    
     // TODO: 修改方法签名和实现，使测试通过
-    int get(int i) {
+    // 添加const限定符，使得const对象可以调用此方法
+    int get(int i) const {
+        return numbers[i];  // 直接返回数组中对应索引的值
     }
 };
 
